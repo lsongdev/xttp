@@ -1,0 +1,26 @@
+{
+  "name": "xttp",
+  "version": "0.0.1",
+  "description": "simple http client in node js",
+  "main": "index.js",
+  "directories": {
+    "example": "example"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/song940/xttp.git"
+  },
+  "author": "lsong",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/song940/xttp/issues"
+  },
+  "homepage": "https://github.com/song940/xttp#readme",
+  "keywords": [
+    "http",
+    "request"
+  ]
+}
