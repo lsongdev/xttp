@@ -1,6 +1,7 @@
 const URI = require('url');
 const http = require('http');
 const https = require('https');
+const querystring = require('querystring');
 /**
  * Xttp
  * @param {*} url 
@@ -39,6 +40,11 @@ Xttp.Request.prototype.get = function(url){
   return Object.assign(this, URI.parse(url, true));
 };
 
+Xttp.Request.prototype.post = function(url){
+  this.method = 'POST';
+  return Object.assign(this, URI.parse(url, true));
+};
+
 Xttp.Request.prototype.header = function(key, value){
   if(typeof key === 'object'){
     this.headers = key;
@@ -53,13 +59,48 @@ Xttp.Request.prototype.send = function(body){
   return this;
 };
 
+Xttp.Request.prototype.type = function(contentType){
+  return this.header('content-type', {
+    'form': 'application/x-www-form-urlencoded',
+    'urlencoded': 'application/x-www-form-urlencoded',
+  }[contentType] || contentType);
+};
+
+Xttp.Request.prototype.json = function(body){
+  this.headers['content-type'] = 'application/json';
+  return this.send(body);
+};
+
+Xttp.Request.prototype.getBody = function(){
+  let { body } = this;
+  let contentType = this.headers['content-type'];
+  if(!contentType) contentType = 'application/json';
+  switch(contentType){
+    case 'application/json':
+      body = JSON.stringify(body);
+      break;
+    case 'application/x-www-form-urlencoded':
+      body = querystring.stringify(body);
+      break;
+    case 'multipart/form-data':
+      console.warn('[xttp] multipart/form-data', body);
+      break;
+    default:
+      console.warn('[xttp] unknow content-type:', contentType);
+      break;
+  }
+  this.header('content-type', contentType);
+  this.header('content-length', Buffer.byteLength(body));
+  return body;
+};
+
 Xttp.Request.prototype.end = function(){
-  this.headers['Content-Length'] = Buffer.byteLength(this.body);
+  const body = this.getBody();
   const p = new Promise((response, reject) => {
     const client = this.protocol === 'http:' ? http : https;
     this.req = client.request(this, response);
     this.req.on('error', reject);
-    this.req.write(this.body);
+    this.req.write(body);
     this.req.end();
   });
   return p.then(res => new Xttp.Response(res));
@@ -68,6 +109,10 @@ Xttp.Request.prototype.end = function(){
 Xttp.Response = function(res){
   this.res = res;
   return this;
+};
+
+Xttp.Response.prototype.pipe = function(stream){
+  return this.res.pipe(stream);
 };
 
 Xttp.Response.prototype.data = function(){
