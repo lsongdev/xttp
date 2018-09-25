@@ -12,8 +12,9 @@ const xttp = require('..');
 // });
 
 // // case 2:
-// xttp('https://api.github.com/users/song940/orgs', {
+// xttp('https://httpbin.org/get?a=b', {
 //   method: 'get',
+//   query: { c: 'd' },
 //   headers: {
 //     'User-Agent': 'xttp/1.0'
 //   }
@@ -25,8 +26,13 @@ const xttp = require('..');
 
 // case 3:
 xttp
-.create()
-.post('https://httpbin.org/post')
+.create({
+  url: 'aaa',
+  query: { a: 'b' }
+})
+.get('https://httpbin.org/get?e=f')
+.query('c', 'd')
+.query({ g: 'h' })
 .json({ name: 'xttp' })
 .then(res => res.json())
 .then(res => {

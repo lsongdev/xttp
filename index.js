@@ -29,7 +29,12 @@ Xttp.create = (url, params) => {
  * @param {*} params 
  */
 Xttp.Request = function(url, params){
-  if(url) this.get(url);
+  if(typeof url === 'object'){
+    params = url;
+    url = params.url;
+  }
+  if(typeof url === 'string') 
+    this.get(url);
   return Object.assign(this, {
     body: '',
     headers: {}
@@ -44,6 +49,21 @@ Xttp.Request.prototype.post = function(url){
   this.method = 'POST';
   return Object.assign(this, URI.parse(url, true));
 };
+
+function setQuery(name, value){
+  if(typeof name === 'object'){
+    this._query = Object.assign({}, this._query, name);
+  }else{
+    this._query[name] = value;
+  }
+  this.path = this.pathname+'?'+querystring.stringify(this._query);
+  return this;
+};
+
+Xttp.Request.prototype.__defineSetter__('query', setQuery);
+Xttp.Request.prototype.__defineGetter__('query', function(){
+  return Object.assign(setQuery.bind(this), this._query);
+});
 
 Xttp.Request.prototype.header = function(key, value){
   if(typeof key === 'object'){
