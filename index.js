@@ -10,7 +10,7 @@ const querystring = require('querystring');
  */
 function Xttp(url, params, fn) {
   const request = new Xttp.Request(url, params);
-  request.then(x => fn && fn(null, x), fn);
+  fn && request.end(fn);
   return request;
 };
 
@@ -37,26 +37,42 @@ Xttp.Request = function(url, params){
     this.get(url);
   return Object.assign(this, {
     body: '',
-    headers: {}
+    headers: {},
+    middleware: []
   }, params);
 };
-
-Xttp.Request.prototype.get = function(url){
-  return Object.assign(this, URI.parse(url, true));
+/**
+ * use
+ * @param {*} mw 
+ */
+Xttp.Request.prototype.use = function(mw){
+  if(typeof mw !== 'function')
+    throw new TypeError(`[xttp] middleware must be a function`);
+  this.middleware.push(mw);
+  return this;
 };
 
-Xttp.Request.prototype.post = function(url){
-  this.method = 'POST';
-  return Object.assign(this, URI.parse(url, true));
-};
+[ 'get', 'post', 'put', 'delete' ].forEach(method => {
+  Xttp[method] = function(url, params, fn){
+    return Xttp.create(url, Object.assign({
+      method
+    }, params), fn);
+  };
+  Xttp.Request.prototype[method] = function(url){
+    this.method = method;
+    return Object.assign(this, URI.parse(url, true));
+  };
+});
 
 function setQuery(name, value){
+  this._query = this._query || {};
   if(typeof name === 'object'){
-    this._query = Object.assign({}, this._query, name);
+    Object.assign(this._query, name);
   }else{
     this._query[name] = value;
   }
-  this.path = this.pathname+'?'+querystring.stringify(this._query);
+  const qs = querystring.stringify(this._query);
+  this.path = `${this.pathname}?${qs}`;
   return this;
 };
 
@@ -64,14 +80,29 @@ Xttp.Request.prototype.__defineSetter__('query', setQuery);
 Xttp.Request.prototype.__defineGetter__('query', function(){
   return Object.assign(setQuery.bind(this), this._query);
 });
-
+/**
+ * header
+ * @param {*} key 
+ * @param {*} value 
+ */
 Xttp.Request.prototype.header = function(key, value){
   if(typeof key === 'object'){
-    this.headers = key;
+    Object.assign(this.headers, key);
   }else{
     this.headers[key] = value;
   }
   return this;
+};
+/**
+ * type
+ * @param {*} contentType 
+ */
+Xttp.Request.prototype.type = function(contentType){
+  return this.header('content-type', {
+    'json': 'application/json',
+    'form': 'application/x-www-form-urlencoded',
+    'urlencoded': 'application/x-www-form-urlencoded',
+  }[contentType] || contentType);
 };
 
 Xttp.Request.prototype.send = function(body){
@@ -79,23 +110,22 @@ Xttp.Request.prototype.send = function(body){
   return this;
 };
 
-Xttp.Request.prototype.type = function(contentType){
-  return this.header('content-type', {
-    'form': 'application/x-www-form-urlencoded',
-    'urlencoded': 'application/x-www-form-urlencoded',
-  }[contentType] || contentType);
+Xttp.Request.prototype.json = function(body){
+  return this.type('json').send(body);
 };
 
-Xttp.Request.prototype.json = function(body){
-  this.headers['content-type'] = 'application/json';
-  return this.send(body);
+Xttp.Request.prototype.getHeader = function(name){
+  for(const k in this.headers){
+    if(k.toLowerCase() === name.toLowerCase())
+      return this.headers[k];
+  }
 };
 
 Xttp.Request.prototype.getBody = function(){
   let { body } = this;
-  let contentType = this.headers['content-type'];
-  if(!contentType) contentType = 'application/json';
-  switch(contentType){
+  let contentType = this.getHeader('content-type');
+  if(!contentType) contentType = 'application/x-www-form-urlencoded';
+  switch(contentType.toLowerCase()){
     case 'application/json':
       body = JSON.stringify(body);
       break;
@@ -109,12 +139,13 @@ Xttp.Request.prototype.getBody = function(){
       console.warn('[xttp] unknow content-type:', contentType);
       break;
   }
+  body = body || '';
   this.header('content-type', contentType);
   this.header('content-length', Buffer.byteLength(body));
-  return body;
+  return body; 
 };
 
-Xttp.Request.prototype.end = function(){
+Xttp.Request.prototype.end = function(fn){
   const body = this.getBody();
   const p = new Promise((response, reject) => {
     const client = this.protocol === 'http:' ? http : https;
@@ -127,19 +158,27 @@ Xttp.Request.prototype.end = function(){
 };
 
 Xttp.Response = function(res){
-  this.res = res;
+  this.response = res;
   return this;
 };
 
+Xttp.Response.prototype.__defineGetter__('status', function(){
+  return this.response.statusCode;
+});
+
+Xttp.Response.prototype.__defineGetter__('headers', function(){
+  return this.response.headers;
+});
+
 Xttp.Response.prototype.pipe = function(stream){
-  return this.res.pipe(stream);
+  return this.response.pipe(stream);
 };
 
 Xttp.Response.prototype.data = function(){
   if(this._data) return Promise.resolve(this._data);
   return new Promise((resolve, reject) => {
     const buffer = [];
-    this.res
+    this.response
     .on('error', reject)
     .on('data', chunk => buffer.push(chunk))
     .on('end', () => resolve(this._data = Buffer.concat(buffer)));

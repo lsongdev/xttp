@@ -15,17 +15,6 @@ const xttp = require('xttp');
 
 // case 1:
 xttp('https://api.github.com/users/song940/orgs', {
-  method: 'get',  
-  headers: {
-    'User-Agent': 'xttp/1.0'
-  }
-}, async (err, res) => {
-  const data = await res.json();
-  console.log(err, data);
-});
-
-// case 2:
-xttp('https://api.github.com/users/song940/orgs', {
   method: 'get',
   headers: {
     'User-Agent': 'xttp/1.0'
@@ -36,15 +25,31 @@ xttp('https://api.github.com/users/song940/orgs', {
   console.log(res);
 });
 
+// case 2:
+xttp('https://api.github.com/users/song940/orgs', {
+  method: 'get',  
+  headers: {
+    'User-Agent': 'xttp/1.0'
+  }
+}, async (err, res) => {
+  const data = await res.json();
+  console.log(err, data);
+});
+
 // case 3:
 xttp
 .create()
-.get('https://api.github.com/users/song940/orgs')
-.header('User-Agent', 'Xttp/0.1')
+.post('https://httpbin.org/post?a=b')
+.query({ c: 'd' })
 .then(res => res.json())
-.then(res => {
-  console.log(res);
-});
+.then(res => console.log(res));
+
+// case 4:
+xttp
+.get('https://httpbin.org/get?a=b')
+.then(res => res.json())
+.then(res => console.log(res));
+
 
 ```
 

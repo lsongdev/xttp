@@ -1,7 +1,7 @@
 {
   "name": "xttp",
-  "version": "0.0.2",
-  "description": "simple http client in node js",
+  "version": "0.0.4",
+  "description": "simple & powerful http client in Node.js",
   "main": "index.js",
   "directories": {
     "example": "example"
