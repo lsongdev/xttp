@@ -1,6 +1,7 @@
 const URI = require('url');
 const http = require('http');
 const https = require('https');
+const Stream = require('stream');
 const querystring = require('querystring');
 /**
  * Xttp
@@ -121,25 +122,19 @@ Xttp.Request.prototype.getHeader = function(name){
   }
 };
 
+Xttp.Serializers = {
+  'application/json': JSON.stringify,
+  'application/x-www-form-urlencoded': querystring.stringify
+};
+
 Xttp.Request.prototype.getBody = function(){
   let { body } = this;
   let contentType = this.getHeader('content-type');
   if(!contentType) contentType = 'application/x-www-form-urlencoded';
-  switch(contentType.toLowerCase()){
-    case 'application/json':
-      body = JSON.stringify(body);
-      break;
-    case 'application/x-www-form-urlencoded':
-      body = querystring.stringify(body);
-      break;
-    case 'multipart/form-data':
-      console.warn('[xttp] multipart/form-data', body);
-      break;
-    default:
-      console.warn('[xttp] unknow content-type:', contentType);
-      break;
-  }
-  body = body || '';
+  const serializer = Xttp.Serializers[contentType];
+  if(typeof serializer !== 'function')
+    throw new Error(`[xttp] unknow content-type: ${contentType}`);
+  body = serializer(body) || '';
   this.header('content-type', contentType);
   this.header('content-length', Buffer.byteLength(body));
   return body; 
@@ -151,8 +146,11 @@ Xttp.Request.prototype.end = function(fn){
     const client = this.protocol === 'http:' ? http : https;
     this.req = client.request(this, response);
     this.req.on('error', reject);
-    this.req.write(body);
-    this.req.end();
+    if(body instanceof Stream){
+      body.pipe(this.req);
+    }else{
+      this.req.end(body);
+    }
   });
   return p.then(res => new Xttp.Response(res));
 };
