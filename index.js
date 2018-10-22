@@ -2,7 +2,11 @@ const URI = require('url');
 const http = require('http');
 const https = require('https');
 const Stream = require('stream');
+const {debuglog} = require('util');
 const querystring = require('querystring');
+
+const debug = debuglog('xttp');
+
 /**
  * Xttp
  * @param {*} url 
@@ -140,9 +144,10 @@ Xttp.Request.prototype.getBody = function(){
   return body; 
 };
 
-Xttp.Request.prototype.end = function(fn){
+Xttp.Request.prototype.end = function(){
   const body = this.getBody();
-  const p = new Promise((response, reject) => {
+  debug('[xttp] send request:', this);
+  return new Promise((response, reject) => {
     const client = this.protocol === 'http:' ? http : https;
     this.req = client.request(this, response);
     this.req.on('error', reject);
@@ -151,12 +156,15 @@ Xttp.Request.prototype.end = function(fn){
     }else{
       this.req.end(body);
     }
-  });
-  return p.then(res => new Xttp.Response(res));
+  }).then(res => new Xttp.Response(this, res));
 };
 
-Xttp.Response = function(res){
+Xttp.Response = function(req, res){
+  if(!(this instanceof Xttp.Response))
+    return new Xttp.Response(req, res);
+  this.request = req;
   this.response = res;
+  debug('[xttp] response:', this.status, this.headers);
   return this;
 };
 

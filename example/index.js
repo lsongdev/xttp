@@ -5,16 +5,18 @@ const xttp = require('..');
 //   .then(res => res.json())
 //   .then(res => console.log(res));
 
-// // // case 1:
-// xttp('https://api.github.com/users/song940/orgs', {
-//   method: 'get',  
-//   headers: {
-//     'User-Agent': 'xttp/1.0'
-//   }
-// }, async (err, res) => {
-//   const data = await res.json();
-//   console.log(err, data);
-// });
+// // case 1:
+xttp('https://httpbin.org/post', {
+  method: 'post',  
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: '{}'
+})
+.then(res => res.json())
+.then(res => {
+  console.log(res);
+});
 
 // // case 2:
 // xttp('https://httpbin.org/get?a=b', {
@@ -30,16 +32,17 @@ const xttp = require('..');
 // });
 
 // case 3:
-xttp
-.create({
-  url: 'aaa',
-  query: { a: 'b' }
-})
-.post('https://httpbin.org/post?e=f')
-.query('c', 'd')
-.query({ g: 'h' })
-.json({ name: 'xttp' })
-.then(res => res.json())
-.then(res => {
-  console.log(res);
-});
+// xttp
+// .create({
+//   url: 'aaa',
+//   query: { a: 'b' }
+// })
+// .header('')
+// .post('https://httpbin.org/post?e=f')
+// .query('c', 'd')
+// .query({ g: 'h' })
+// .json({ name: 'xttp' })
+// .then(res => res.json())
+// .then(res => {
+//   console.log(res);
+// });
