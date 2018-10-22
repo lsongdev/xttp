@@ -9,7 +9,7 @@ const xttp = require('..');
 xttp('https://httpbin.org/post', {
   method: 'post',  
   headers: {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json; charset=utf-8'
   },
   body: '{}'
 })

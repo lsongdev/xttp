@@ -1,6 +1,7 @@
 const URI = require('url');
 const http = require('http');
 const https = require('https');
+const MIME = require('mime2');
 const Stream = require('stream');
 const {debuglog} = require('util');
 const querystring = require('querystring');
@@ -93,8 +94,11 @@ Xttp.Request.prototype.__defineGetter__('query', function(){
 Xttp.Request.prototype.header = function(key, value){
   if(typeof key === 'object'){
     Object.assign(this.headers, key);
-  }else{
-    this.headers[key] = value;
+    return this;
+  }
+  for(const k in this.headers){
+    if(k.toLowerCase() === key.toLowerCase())
+      this.headers[k] = value;
   }
   return this;
 };
@@ -126,20 +130,25 @@ Xttp.Request.prototype.getHeader = function(name){
   }
 };
 
+Xttp.Request.prototype.__defineGetter__('contentType', function(){
+  const header = this.getHeader('content-type');
+  const { value } =  MIME.Header.parseValue(header);
+  return value;
+});
+
 Xttp.Serializers = {
   'application/json': JSON.stringify,
   'application/x-www-form-urlencoded': querystring.stringify
 };
 
 Xttp.Request.prototype.getBody = function(){
-  let { body } = this;
-  let contentType = this.getHeader('content-type');
-  if(!contentType) contentType = 'application/x-www-form-urlencoded';
-  const serializer = Xttp.Serializers[contentType];
+  let { body, contentType } = this;
+  const serializer = Xttp.Serializers[
+    contentType || 'application/x-www-form-urlencoded'];
   if(typeof serializer !== 'function')
     throw new Error(`[xttp] unknow content-type: ${contentType}`);
   body = serializer(body) || '';
-  this.header('content-type', contentType);
+  !contentType && this.type('urlencoded');
   this.header('content-length', Buffer.byteLength(body));
   return body; 
 };
