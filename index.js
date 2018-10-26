@@ -132,8 +132,7 @@ Xttp.Request.prototype.getHeader = function(name){
 
 Xttp.Request.prototype.__defineGetter__('contentType', function(){
   const header = this.getHeader('content-type');
-  const { value } =  MIME.Header.parseValue(header);
-  return value;
+  return header && MIME.Header.parseValue(header).value;
 });
 
 Xttp.Serializers = {
