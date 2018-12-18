@@ -4,6 +4,7 @@ const https = require('https');
 const MIME = require('mime2');
 const Stream = require('stream');
 const {debuglog} = require('util');
+const iconv = require('iconv-lite');
 const querystring = require('querystring');
 
 const debug = debuglog('xttp');
@@ -97,9 +98,12 @@ Xttp.Request.prototype.header = function(key, value){
     return this;
   }
   for(const k in this.headers){
-    if(k.toLowerCase() === key.toLowerCase())
+    if(k.toLowerCase() === key.toLowerCase()){
       this.headers[k] = value;
+      return this;
+    }
   }
+  this.headers[key] = value;
   return this;
 };
 /**
@@ -200,7 +204,7 @@ Xttp.Response.prototype.data = function(){
 };
 
 Xttp.Response.prototype.text = function({ encoding = 'utf8' } = {}){
-  return this.data().then(x => x.toString(encoding));
+  return this.data().then(x => iconv.decode(x, encoding));
 };
 
 Xttp.Response.prototype.json = function(options){

@@ -1,6 +1,6 @@
 {
   "name": "xttp",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "simple & powerful http client in Node.js",
   "main": "index.js",
   "directories": {
@@ -24,6 +24,7 @@
     "request"
   ],
   "dependencies": {
-    "mime2": "^0.0.6"
+    "iconv-lite": "latest",
+    "mime2": "latest"
   }
 }
