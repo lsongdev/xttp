@@ -6,7 +6,7 @@ const Stream = require('stream');
 const {debuglog} = require('util');
 const iconv = require('iconv-lite');
 const querystring = require('querystring');
-
+const pkg = require('./package');
 const debug = debuglog('xttp');
 
 /**
@@ -44,7 +44,9 @@ Xttp.Request = function(url, params){
     this.get(url);
   return Object.assign(this, {
     body: '',
-    headers: {},
+    headers: {
+      'User-Agent': `${pkg.name}/${pkg.version}`
+    },
     middleware: []
   }, params);
 };
@@ -72,13 +74,20 @@ Xttp.Request.prototype.use = function(mw){
 });
 
 function setQuery(name, value){
-  this._query = this._query || {};
+  this._query = this._query || [];
   if(typeof name === 'object'){
-    Object.assign(this._query, name);
+    Object.keys(name).forEach(n => {
+      this._query.push({ name: n, value: name[n] });
+    });
   }else{
-    this._query[name] = value;
+    this._query.push({ name, value });
   }
-  const qs = querystring.stringify(this._query);
+  const qs = this._query.map(q => {
+    return [
+      encodeURIComponent(q.name),
+      encodeURIComponent(q.value)
+    ].join('=');
+  }).join('&');
   this.path = `${this.pathname}?${qs}`;
   return this;
 };
