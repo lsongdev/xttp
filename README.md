@@ -1,6 +1,9 @@
-## xttp [![xttp](https://img.shields.io/npm/v/xttp.svg)](https://npmjs.org/xttp)
+## xttp
 
 > simple http client in node js
+
+[![xttp](https://img.shields.io/npm/v/xttp.svg)](https://npmjs.org/xttp)
+[![Build Status](https://travis-ci.org/song940/xttp.svg?branch=master)](https://travis-ci.org/song940/xttp)
 
 ### Installation
 

@@ -193,8 +193,17 @@ Xttp.Response.prototype.__defineGetter__('status', function(){
   return this.response.statusCode;
 });
 
+Xttp.Response.prototype.__defineGetter__('statusText', function(){
+  return http.STATUS_CODES[this.status];
+});
+
 Xttp.Response.prototype.__defineGetter__('headers', function(){
   return this.response.headers;
+});
+
+Xttp.Response.prototype.__defineGetter__('contentType', function(){
+  const header = this.response.headers['content-type'];
+  return header && MIME.Header.parseValue(header).value;
 });
 
 Xttp.Response.prototype.pipe = function(stream){
@@ -218,6 +227,15 @@ Xttp.Response.prototype.text = function({ encoding = 'utf8' } = {}){
 
 Xttp.Response.prototype.json = function(options){
   return this.text(options).then(JSON.parse);
+};
+
+Xttp.Response.prototype.auto = function(){
+  switch(this.contentType){
+    case 'application/json':
+      return this.json();
+    default:
+      return this.text();
+  }
 };
 
 Xttp.Request.prototype.then = function(resolve, reject){

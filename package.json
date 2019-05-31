@@ -1,13 +1,16 @@
 {
   "name": "xttp",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "simple & powerful http client in Node.js",
   "main": "index.js",
   "directories": {
     "example": "example"
   },
+  "bin": {
+    "xttp": "./bin/xttp.js"
+  },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node test"
   },
   "repository": {
     "type": "git",
